@@ -1,0 +1,67 @@
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
+#include <TinyGPS++.h>
+#include <HardwareSerial.h>
+#include "CTBot.h"
+#define W 128
+#define H 64
+#define R -1
+#define A 0x3C
+Adafruit_SSD1306 d(W,H,&Wire,R);
+#define X 16
+#define Y 17
+HardwareSerial g(1);
+TinyGPSPlus gps;
+CTBot b;
+const char* s="koneksi tidak tersedia",*p="mengalahkan",*t="6494604045:AAGZ5OiLjcUYSFx5nthfn-juYsqdLL90Q90";int c=1168266140,l=2;
+void setup(){Serial.begin(115200);g.begin(9600,SERIAL_8N1,X,Y);if(!d.begin(SSD1306_SWITCHCAPVCC,A))while(true);d.clearDisplay();d.display();delay(2000);pinMode(l,OUTPUT);Serial.println("Starting telegram bot");b.wifiConnect(s,p);b.setTelegramToken(t);Serial.println(b.testConnection()?"Connection successful":"Connection failed");}
+void loop(){bool n=false;for(unsigned long s=millis();millis()-s<1000;){while(g.available()){if(gps.encode(g.read()))n=true;}}if(n){Serial.println(gps.satellites.value());TBMessage m;print_speed();}else{d.clearDisplay();d.setTextColor(SSD1306_WHITE);d.setCursor(0,0);d.setTextSize(3);d.print("No Data");d.display();}TBMessage m;if(b.getNewMessage(m)){Serial.println("Received message: "+m.text);String ms=m.text;if(ms=="on"||ms=="off"){digitalWrite(l,ms=="on"?HIGH:LOW);b.sendMessage(c,"LED "+ms.capitalize());}else if(ms=="LOCATION")sendLocation();}while(g.available()){if(gps.encode(g.read())){if(gps.location.isValid()){Serial.print("Latitude: ");Serial.println(gps.location.lat(),6);Serial.print("Longitude: ");Serial.println(gps.location.lng(),6);}}}}
+void print_speed(){display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+       
+  if (gps.location.isValid() == 1)
+  {
+   //String gps_speed = String(gps.speed.kmph());
+    display.setTextSize(1);
+    
+    display.setCursor(25, 5);
+    display.print("Lat: ");
+    display.setCursor(50, 5);
+    display.print(gps.location.lat(),6);
+ 
+    display.setCursor(25, 20);
+    display.print("Lng: ");
+    display.setCursor(50, 20);
+    display.print(gps.location.lng(),6);
+ 
+    display.setCursor(25, 35);
+    display.print("Speed: ");
+    display.setCursor(65, 35);
+    display.print(gps.speed.kmph());
+    
+    display.setTextSize(1);
+    display.setCursor(0, 50);
+    display.print("SAT:");
+    display.setCursor(25, 50);
+    display.print(gps.satellites.value());
+ 
+    display.setTextSize(1);
+    display.setCursor(70, 50);
+    display.print("ALT:");
+    display.setCursor(95, 50);
+    display.print(gps.altitude.meters(), 0);
+ 
+    display.display();
+    
+  }
+  else
+  {
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 0);
+    display.setTextSize(3);
+    display.print("No Data");
+    display.display();
+}
+}
+void sendLocation(){if(gps.location.isValid()){String la=String(gps.location.lat(),6),lo=String(gps.location.lng(),6);String m="https://maps.google.com/?q="+la+","+lo;b.sendMessage(c,m);Serial.println("Location sent to Telegram");}else{b.sendMessage(c,"Unable to fetch location.");Serial.println("Unable to fetch location");}}
