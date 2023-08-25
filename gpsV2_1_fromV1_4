@@ -13,7 +13,7 @@ Adafruit_SSD1306 d(W,H,&Wire,R);
 HardwareSerial g(1);
 TinyGPSPlus gps;
 CTBot b;
-const char* s="koneksi tidak tersedia",*p="mengalahkan",*t="6494604045:AAGZ5OiLjcUYSFx5nthfn-juYsqdLL90Q90";int c=1168266140,l=2;
+const char *s="koneksi tidak tersedia",*p="mengalahkan",*t="6494604045:AAGZ5OiLjcUYSFx5nthfn-juYsqdLL90Q90";int c=1168266140,l=2;
 void setup(){Serial.begin(115200);g.begin(9600,SERIAL_8N1,X,Y);if(!d.begin(SSD1306_SWITCHCAPVCC,A))while(true);d.clearDisplay();d.display();delay(2000);pinMode(l,OUTPUT);Serial.println("Starting telegram bot");b.wifiConnect(s,p);b.setTelegramToken(t);Serial.println(b.testConnection()?"Connection successful":"Connection failed");}
 void loop(){bool n=false;for(unsigned long s=millis();millis()-s<1000;){while(g.available()){if(gps.encode(g.read()))n=true;}}if(n){Serial.println(gps.satellites.value());TBMessage m;print_speed();}else{d.clearDisplay();d.setTextColor(SSD1306_WHITE);d.setCursor(0,0);d.setTextSize(3);d.print("No Data");d.display();}TBMessage m;if(b.getNewMessage(m)){Serial.println("Received message: "+m.text);String ms=m.text;if(ms=="on"||ms=="off"){digitalWrite(l,ms=="on"?HIGH:LOW);b.sendMessage(c,"LED "+ms.capitalize());}else if(ms=="LOCATION")sendLocation();}while(g.available()){if(gps.encode(g.read())){if(gps.location.isValid()){Serial.print("Latitude: ");Serial.println(gps.location.lat(),6);Serial.print("Longitude: ");Serial.println(gps.location.lng(),6);}}}}
 void print_speed(){display.clearDisplay();
@@ -64,4 +64,4 @@ void print_speed(){display.clearDisplay();
     display.display();
 }
 }
-void sendLocation(){if(gps.location.isValid()){String la=String(gps.location.lat(),6),lo=String(gps.location.lng(),6);String m="https://maps.google.com/?q="+la+","+lo;b.sendMessage(c,m);Serial.println("Location sent to Telegram");}else{b.sendMessage(c,"Unable to fetch location.");Serial.println("Unable to fetch location");}}
+void sendLocation(){if(gps.location.isValid()){String la=String(gps.location.lat(),6),lo=String(gps.location.lng(),6);b.sendMessage(c,"https://maps.google.com/?q="+la+","+lo);Serial.println("Location sent to Telegram");}else{b.sendMessage(c,"Unable to fetch location.");Serial.println("Unable to fetch location");}}
